@@ -7,7 +7,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6">
         <Link href="/dashboard/organizations" className="card">
-          Organizations
+          My Organizations
         </Link>
 
         <Link href="/dashboard/users" className="card">

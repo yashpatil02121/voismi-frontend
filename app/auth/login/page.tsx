@@ -24,12 +24,18 @@ export default function LoginPage() {
         password,
       });
 
-      // Save token
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      const { access_token, refresh_token, user } = res.data;
 
+      if (!access_token || !refresh_token) {
+        throw new Error("Invalid login response");
+      }
 
-      // Redirect
+      // Save tokens
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Redirect to dashboard
       router.push("/dashboard");
     } catch (error: unknown) {
       const err = error as AxiosError<{ error: string }>;

@@ -11,14 +11,14 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
-  email: string;
-  address: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  tax_id: string;
-  balance: number;
+  email: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  tax_id: string | null;
   created_at: string;
+  balance?: number; // if exists in DB
 }
 
 export interface OrganizationMember {

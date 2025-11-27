@@ -2,15 +2,20 @@ import axios from "axios";
 
 export const http = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
+// Attach tokens automatically
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const access = localStorage.getItem("access_token");
+  const refresh = localStorage.getItem("refresh_token");
+
+  if (access) {
+    config.headers["Authorization"] = `Bearer ${access}`;
   }
+
+  if (refresh) {
+    config.headers["x-refresh-token"] = refresh;
+  }
+
   return config;
 });
