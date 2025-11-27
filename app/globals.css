@@ -5,6 +5,11 @@
   --foreground: #171717;
 }
 
+.card {
+  @apply bg-white p-6 shadow rounded hover:shadow-lg transition cursor-pointer;
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
