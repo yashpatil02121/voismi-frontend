@@ -5,6 +5,17 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { http } from "@/lib/http";
 import type { Organization } from "@/types/models";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
 
 interface OrgMember {
   id: string;
@@ -35,6 +46,79 @@ export default function OrganizationDetailsPage() {
       setLoading(false);
     }
   };
+
+  function AddMemberDialog({ orgId, onAdded }: { orgId: string; onAdded: () => void }) {
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: any) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const addMember = async () => {
+    setLoading(true);
+    try {
+      // 1. Create user
+      const res = await http.post("/auth/register", {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        org_id: orgId,
+      });
+
+      const createdUser = res.data.data;
+
+      // 2. Add to organization_members
+      await http.post(`/organizations/${orgId}/add-member`, {
+        user_id: createdUser.id,
+        role: "member",
+      });
+
+      onAdded(); // refresh members list
+      setForm({ name: "", email: "", password: "" });
+    } catch (err) {
+      console.error("Add member error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add Member</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-3">
+        <Input
+          name="name"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={handleChange}
+        />
+        <Input
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+        />
+        <Input
+          type="password"
+          name="password"
+          placeholder="Temporary Password"
+          value={form.password}
+          onChange={handleChange}
+        />
+      </div>
+
+      <DialogFooter>
+        <Button onClick={addMember} disabled={loading} className="bg-blue-600 text-white">
+          {loading ? "Adding..." : "Add Member"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 
   useEffect(() => {
   if (!id) return;
@@ -81,37 +165,47 @@ export default function OrganizationDetailsPage() {
             </div>
           </div>
 
-          {/* MEMBERS LIST */}
-          <div className="bg-white p-6 shadow rounded">
-            <h2 className="text-xl font-semibold mb-4">Members</h2>
+{/* MEMBERS LIST */}
+<div className="bg-white p-6 shadow rounded">
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-xl font-semibold">Members</h2>
 
-            {members.length === 0 ? (
-              <p className="text-gray-600">No members found.</p>
-            ) : (
-              <div className="space-y-3">
-                {members.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex justify-between items-center p-3 border rounded"
-                  >
-                    <div>
-                      <p className="font-medium">{m.user?.name}</p>
-                      <p className="text-sm text-gray-600">{m.user?.email}</p>
-                    </div>
+    {/* ADD MEMBER BUTTON */}
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className="bg-blue-600 text-white">Add Member</Button>
+      </DialogTrigger>
 
-                    <div className="text-right">
-                      <p className="text-sm font-semibold">
-                        Role: <span className="text-blue-600">{m.role}</span>
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Status: {m.status}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      <AddMemberDialog orgId={id as string} onAdded={fetchDetails} />
+    </Dialog>
+  </div>
+
+  {members.length === 0 ? (
+    <p className="text-gray-600">No members found.</p>
+  ) : (
+    <div className="space-y-3">
+      {members.map((m) => (
+        <div
+          key={m.id}
+          className="flex justify-between items-center p-3 border rounded"
+        >
+          <div>
+            <p className="font-medium">{m.user?.name}</p>
+            <p className="text-sm text-gray-600">{m.user?.email}</p>
           </div>
+
+          <div className="text-right">
+            <p className="text-sm font-semibold">
+              Role: <span className="text-blue-600">{m.role}</span>
+            </p>
+            <p className="text-xs text-gray-600">Status: {m.status}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
         </div>
       )}
     </div>
