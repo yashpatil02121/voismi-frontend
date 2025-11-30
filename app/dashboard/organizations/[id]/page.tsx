@@ -34,6 +34,7 @@ export default function OrganizationDetailsPage() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openAddMember, setOpenAddMember] = useState(false);
 
   const fetchDetails = async () => {
     try {
@@ -47,7 +48,13 @@ export default function OrganizationDetailsPage() {
     }
   };
 
-  function AddMemberDialog({ orgId, onAdded }: { orgId: string; onAdded: () => void }) {
+function AddMemberDialog({
+  orgId,
+  onAdded
+}: {
+  orgId: string;
+  onAdded: () => void;
+}) {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -57,7 +64,6 @@ export default function OrganizationDetailsPage() {
   const addMember = async () => {
     setLoading(true);
     try {
-      // 1. Create user
       const res = await http.post("/auth/register", {
         name: form.name,
         email: form.email,
@@ -67,14 +73,14 @@ export default function OrganizationDetailsPage() {
 
       const createdUser = res.data.data;
 
-      // 2. Add to organization_members
       await http.post(`/organizations/${orgId}/add-member`, {
         user_id: createdUser.id,
         role: "member",
       });
 
-      onAdded(); // refresh members list
       setForm({ name: "", email: "", password: "" });
+
+      onAdded(); // <-- this will close dialog now
     } catch (err) {
       console.error("Add member error:", err);
     } finally {
@@ -83,39 +89,25 @@ export default function OrganizationDetailsPage() {
   };
 
   return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Add Member</DialogTitle>
-      </DialogHeader>
+    <>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Member</DialogTitle>
+        </DialogHeader>
 
-      <div className="space-y-3">
-        <Input
-          name="name"
-          placeholder="Full Name"
-          value={form.name}
-          onChange={handleChange}
-        />
-        <Input
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-        />
-        <Input
-          type="password"
-          name="password"
-          placeholder="Temporary Password"
-          value={form.password}
-          onChange={handleChange}
-        />
-      </div>
+        <div className="space-y-3">
+          <Input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} />
+          <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+          <Input type="password" name="password" placeholder="Temporary Password" value={form.password} onChange={handleChange} />
+        </div>
 
-      <DialogFooter>
-        <Button onClick={addMember} disabled={loading} className="bg-blue-600 text-white">
-          {loading ? "Adding..." : "Add Member"}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        <DialogFooter>
+          <Button onClick={addMember} disabled={loading} className="bg-blue-600 text-white">
+            {loading ? "Adding..." : "Add Member"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </>
   );
 }
 
@@ -171,12 +163,19 @@ export default function OrganizationDetailsPage() {
     <h2 className="text-xl font-semibold">Members</h2>
 
     {/* ADD MEMBER BUTTON */}
-    <Dialog>
+    <Dialog open={openAddMember} onOpenChange={setOpenAddMember}>
       <DialogTrigger asChild>
         <Button className="bg-blue-600 text-white">Add Member</Button>
       </DialogTrigger>
 
-      <AddMemberDialog orgId={id as string} onAdded={fetchDetails} />
+      <AddMemberDialog 
+  orgId={id as string} 
+  onAdded={() => {
+    fetchDetails();
+    setOpenAddMember(false);  // CLOSE DIALOG
+  }} 
+/>
+
     </Dialog>
   </div>
 
