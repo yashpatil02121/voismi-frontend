@@ -48,76 +48,76 @@ export default function OrganizationDetailsPage() {
     }
   };
 
-function AddMemberDialog({
-  orgId,
-  onAdded
-}: {
-  orgId: string;
-  onAdded: () => void;
-}) {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [loading, setLoading] = useState(false);
+  function AddMemberDialog({
+    orgId,
+    onAdded
+  }: {
+    orgId: string;
+    onAdded: () => void;
+  }) {
+    const [form, setForm] = useState({ name: "", email: "", password: "" });
+    const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: any) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const handleChange = (e: any) =>
+      setForm({ ...form, [e.target.name]: e.target.value });
 
-  const addMember = async () => {
-    setLoading(true);
-    try {
-      const res = await http.post("/auth/register", {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        org_id: orgId,
-      });
+    const addMember = async () => {
+      setLoading(true);
+      try {
+        const res = await http.post("/auth/register", {
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          org_id: orgId,
+        });
 
-      const createdUser = res.data.data;
+        const createdUser = res.data.data;
 
-      await http.post(`/organizations/${orgId}/add-member`, {
-        user_id: createdUser.id,
-        role: "member",
-      });
+        await http.post(`/organizations/${orgId}/add-member`, {
+          user_id: createdUser.id,
+          role: "member",
+        });
 
-      setForm({ name: "", email: "", password: "" });
+        setForm({ name: "", email: "", password: "" });
 
-      onAdded(); // <-- this will close dialog now
-    } catch (err) {
-      console.error("Add member error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        onAdded(); // <-- this will close dialog now
+      } catch (err) {
+        console.error("Add member error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return (
-    <>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Member</DialogTitle>
-        </DialogHeader>
+    return (
+      <>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Member</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-3">
-          <Input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} />
-          <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
-          <Input type="password" name="password" placeholder="Temporary Password" value={form.password} onChange={handleChange} />
-        </div>
+          <div className="space-y-3">
+            <Input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} />
+            <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+            <Input type="password" name="password" placeholder="Temporary Password" value={form.password} onChange={handleChange} />
+          </div>
 
-        <DialogFooter>
-          <Button onClick={addMember} disabled={loading} className="bg-blue-600 text-white">
-            {loading ? "Adding..." : "Add Member"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </>
-  );
-}
+          <DialogFooter>
+            <Button onClick={addMember} disabled={loading} className="bg-blue-600 text-white">
+              {loading ? "Adding..." : "Add Member"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </>
+    );
+  }
 
 
   useEffect(() => {
-  if (!id) return;
-  if (typeof window === "undefined") return; // <— FIX
+    if (!id) return;
+    if (typeof window === "undefined") return; // <— FIX
 
-  fetchDetails();
-}, [id]);
+    fetchDetails();
+  }, [id]);
 
 
   return (
@@ -134,8 +134,18 @@ function AddMemberDialog({
         <div className="mt-6 space-y-6">
           {/* ORG CARD */}
           <div className="bg-white p-6 shadow rounded">
-            <h1 className="text-2xl font-semibold">{org.name}</h1>
-            <p className="text-gray-700">{org.email}</p>
+            <div className="flex justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold">{org.name}</h1>
+                <p className="text-gray-700">{org.email}</p>
+              </div>
+              <div className="font-bold flex justify-center items-center bg-blue-600 text-white p-4 rounded-lg shadow">
+  <h3>Balance ${org.balance}</h3>
+</div>
+
+
+
+            </div>
 
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
@@ -157,53 +167,53 @@ function AddMemberDialog({
             </div>
           </div>
 
-{/* MEMBERS LIST */}
-<div className="bg-white p-6 shadow rounded">
-  <div className="flex items-center justify-between mb-4">
-    <h2 className="text-xl font-semibold">Members</h2>
+          {/* MEMBERS LIST */}
+          <div className="bg-white p-6 shadow rounded">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Members</h2>
 
-    {/* ADD MEMBER BUTTON */}
-    <Dialog open={openAddMember} onOpenChange={setOpenAddMember}>
-      <DialogTrigger asChild>
-        <Button className="bg-blue-600 text-white">Add Member</Button>
-      </DialogTrigger>
+              {/* ADD MEMBER BUTTON */}
+              <Dialog open={openAddMember} onOpenChange={setOpenAddMember}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 text-white">Add Member</Button>
+                </DialogTrigger>
 
-      <AddMemberDialog 
-  orgId={id as string} 
-  onAdded={() => {
-    fetchDetails();
-    setOpenAddMember(false);  // CLOSE DIALOG
-  }} 
-/>
+                <AddMemberDialog
+                  orgId={id as string}
+                  onAdded={() => {
+                    fetchDetails();
+                    setOpenAddMember(false);  // CLOSE DIALOG
+                  }}
+                />
 
-    </Dialog>
-  </div>
+              </Dialog>
+            </div>
 
-  {members.length === 0 ? (
-    <p className="text-gray-600">No members found.</p>
-  ) : (
-    <div className="space-y-3">
-      {members.map((m) => (
-        <div
-          key={m.id}
-          className="flex justify-between items-center p-3 border rounded"
-        >
-          <div>
-            <p className="font-medium">{m.user?.name}</p>
-            <p className="text-sm text-gray-600">{m.user?.email}</p>
+            {members.length === 0 ? (
+              <p className="text-gray-600">No members found.</p>
+            ) : (
+              <div className="space-y-3">
+                {members.map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex justify-between items-center p-3 border rounded"
+                  >
+                    <div>
+                      <p className="font-medium">{m.user?.name}</p>
+                      <p className="text-sm text-gray-600">{m.user?.email}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">
+                        Role: <span className="text-blue-600">{m.role}</span>
+                      </p>
+                      <p className="text-xs text-gray-600">Status: {m.status}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
-          <div className="text-right">
-            <p className="text-sm font-semibold">
-              Role: <span className="text-blue-600">{m.role}</span>
-            </p>
-            <p className="text-xs text-gray-600">Status: {m.status}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
 
         </div>
       )}
