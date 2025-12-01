@@ -140,8 +140,8 @@ export default function OrganizationDetailsPage() {
                 <p className="text-gray-700">{org.email}</p>
               </div>
               <div className="font-bold flex justify-center items-center bg-blue-600 text-white p-4 rounded-lg shadow">
-  <h3>Balance ${org.balance}</h3>
-</div>
+                <h3>Balance ${org.balance}</h3>
+              </div>
 
 
 
