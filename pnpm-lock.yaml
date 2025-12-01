@@ -47,6 +47,9 @@ importers:
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
+      telnyx:
+        specifier: github:team-telnyx/webrtc
+        version: https://codeload.github.com/team-telnyx/webrtc/tar.gz/577a4ae3505c0bd6645394552d4295ded7be5968
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
@@ -2209,6 +2212,11 @@ packages:
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
+
+  telnyx@https://codeload.github.com/team-telnyx/webrtc/tar.gz/577a4ae3505c0bd6645394552d4295ded7be5968:
+    resolution: {tarball: https://codeload.github.com/team-telnyx/webrtc/tar.gz/577a4ae3505c0bd6645394552d4295ded7be5968}
+    version: 1.0.0
+    engines: {node: '>=14.x'}
 
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
@@ -4629,6 +4637,8 @@ snapshots:
   tailwindcss@4.1.17: {}
 
   tapable@2.3.0: {}
+
+  telnyx@https://codeload.github.com/team-telnyx/webrtc/tar.gz/577a4ae3505c0bd6645394552d4295ded7be5968: {}
 
   tinyglobby@0.2.15:
     dependencies:
