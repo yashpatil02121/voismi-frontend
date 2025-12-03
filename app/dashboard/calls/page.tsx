@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TelnyxRTC } from '@telnyx/rtc';
+// @ts-ignore
+import TelnyxRTC from '@telnyx/webrtc';
 
 export default function DialerPage() {
   const [client, setClient] = useState<any>(null);
