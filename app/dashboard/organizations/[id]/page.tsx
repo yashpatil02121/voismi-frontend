@@ -48,6 +48,13 @@ export default function OrganizationDetailsPage() {
     }
   };
 
+  const handleCall = () => {
+  console.log("Calling");
+  // Replace with your dial logic or route
+  // Example: router.push(`/dashboard/calls?to=${encodeURIComponent(callee)}`);
+};
+
+
   function AddMemberDialog({
     orgId,
     onAdded
@@ -193,6 +200,13 @@ export default function OrganizationDetailsPage() {
               <p className="text-gray-600">No members found.</p>
             ) : (
               <div className="space-y-3">
+                 {/* 📞 Call Button */}
+                  <Button
+                    className="bg-green-600 text-white px-3 py-1 text-sm"
+                    onClick={() => handleCall()}
+                  >
+                    Call
+                  </Button>
                 {members.map((m) => (
                   <div
                     key={m.id}
@@ -208,7 +222,7 @@ export default function OrganizationDetailsPage() {
                         Role: <span className="text-blue-600">{m.role}</span>
                       </p>
                       <p className="text-xs text-gray-600">Status: {m.status}</p>
-                    </div>
+                    </div>  
                   </div>
                 ))}
               </div>
