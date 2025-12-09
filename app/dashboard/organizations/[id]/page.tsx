@@ -64,6 +64,33 @@ export default function OrganizationDetailsPage() {
     }
   };
 
+const startBackendCall = async () => {
+  try {
+    if (!dialNumber) {
+      alert("Enter a phone number");
+      return;
+    }
+
+    const res = await http.post("/calls/voice/call", {
+      toNumber: dialNumber,
+      fromNumber: "+12129833272",
+    });
+
+    console.log("Backend PSTN call started:", res.data);
+
+    setCallResponse(res.data);
+    setCallStatus("ringing");
+
+    // Close dialog automatically after call starts
+    setDialerOpen(false);
+
+  } catch (err) {
+    console.error("Backend call failed:", err);
+    alert("Call failed — check console");
+  }
+};
+
+
   const handleCallButtonClick = async () => {
     // fetch WebRTC token then open dialer
     await fetchVoiceToken();
@@ -312,57 +339,59 @@ const startWebRTCCall = async () => {
               <div className="space-y-3">
                 {/* 📞 Call Button */}
                 <Button
-                  className="bg-green-600 text-white px-3 py-1 text-sm"
-                  onClick={handleCallButtonClick}
-                >
-                  Call
-                </Button>
+  className="bg-green-600 text-white"
+  onClick={() => setDialerOpen(true)}
+>
+  Call
+</Button>
 
                 <>
                   <Dialog open={dialerOpen} onOpenChange={setDialerOpen}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Dial a Number</DialogTitle>
-                      </DialogHeader>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Dial a Number</DialogTitle>
+    </DialogHeader>
 
-                      <div className="space-y-3">
-                        <Input
-                          placeholder="Enter phone number"
-                          value={dialNumber}
-                          onChange={(e) => setDialNumber(e.target.value)}
-                        />
-                      </div>
+    <div className="space-y-3">
+      <Input
+        placeholder="Enter phone number"
+        value={dialNumber}
+        onChange={(e) => setDialNumber(e.target.value)}
+      />
+    </div>
 
-                      {/* CALL + HANGUP BUTTONS */}
-                      <DialogFooter className="flex justify-between mt-4">
-                        <Button
-                          className="bg-green-600 text-white"
-                          onClick={startWebRTCCall}
-                        >
-                          Call
-                        </Button>
+    <DialogFooter className="flex justify-between mt-4">
+      <Button
+        className="bg-green-600 text-white"
+        onClick={startBackendCall}
+      >
+        Call
+      </Button>
 
-                        <Button
-                          className="bg-red-600 text-white"
-                          onClick={hangupWebRTCCall}
-                        >
-                          Hang Up
-                        </Button>
-                      </DialogFooter>
+      <Button
+        className="bg-red-600 text-white"
+        onClick={() => {
+          setDialerOpen(false);
+          setDialNumber("");
+          setCallStatus("idle");
+        }}
+      >
+        Cancel
+      </Button>
+    </DialogFooter>
 
-                      {callStatus !== "idle" && (
-                        <p className="text-sm text-gray-700">
-                          Status: {callStatus}
-                        </p>
-                      )}
+    {callStatus !== "idle" && (
+      <p className="text-sm text-gray-700">Status: {callStatus}</p>
+    )}
 
-                      {callResponse && callResponse.callId && (
-                        <p className="text-sm text-gray-700">
-                          Call ID: {callResponse.callId}
-                        </p>
-                      )}
-                    </DialogContent>
-                  </Dialog>
+    {callResponse?.callId && (
+      <p className="text-sm text-gray-700">
+        Call ID: {callResponse.callId}
+      </p>
+    )}
+  </DialogContent>
+</Dialog>
+
                 </>
 
                 {members.map((m) => (

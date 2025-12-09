@@ -19,22 +19,20 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      const res = await http.post("/auth/login", {
-        email,
-        password,
-      });
+      debugger;
+      const res = await http.post("/auth/login", { email, password });
 
-      const { access_token, refresh_token, user } = res.data;
+      localStorage.setItem("access_token", res.data.access_token);
+      localStorage.setItem("refresh_token", res.data.refresh_token);
 
-      if (!access_token || !refresh_token) {
-        throw new Error("Invalid login response");
-      }
+      // Telnyx SIP creds
+      localStorage.setItem("sipUser", res.data.telnyx.sipUser);
+      localStorage.setItem("sipPassword", res.data.telnyx.sipPassword);
 
-      // Save tokens
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("refresh_token", refresh_token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // JWT login_token for WebRTC
+      localStorage.setItem("telnyx_login_token", res.data.telnyx.login_token);
 
+     
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (error: unknown) {
