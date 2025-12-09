@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { http } from "@/lib/http";
@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
+// import TelnyxRTC from "@telnyx/webrtc";
+import { TelnyxRTC } from "@telnyx/webrtc";
 
 interface OrgMember {
   id: string;
@@ -36,6 +37,21 @@ export default function OrganizationDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [openAddMember, setOpenAddMember] = useState(false);
 
+  const [dialerOpen, setDialerOpen] = useState(false);
+  const [dialNumber, setDialNumber] = useState("");
+  const [callResponse, setCallResponse] = useState<any>(null);
+  const [webrtcToken, setWebrtcToken] = useState("");
+  const [callStatus, setCallStatus] = useState<string>("idle");
+
+  // Telnyx WebRTC client reference (persists across renders)
+  const clientRef = useRef<any>(null);
+
+  const fetchVoiceToken = async () => {
+    const res = await http.get("/calls/voice/token");
+    localStorage.setItem("telnyx_webrtc_token", res.data.token);
+    setWebrtcToken(res.data.token);
+  };
+
   const fetchDetails = async () => {
     try {
       const res = await http.get(`/organizations/${id}`);
@@ -48,16 +64,15 @@ export default function OrganizationDetailsPage() {
     }
   };
 
-  const handleCall = () => {
-  console.log("Calling");
-  // Replace with your dial logic or route
-  // Example: router.push(`/dashboard/calls?to=${encodeURIComponent(callee)}`);
-};
-
+  const handleCallButtonClick = async () => {
+    // fetch WebRTC token then open dialer
+    await fetchVoiceToken();
+    setDialerOpen(true);
+  };
 
   function AddMemberDialog({
     orgId,
-    onAdded
+    onAdded,
   }: {
     orgId: string;
     onAdded: () => void;
@@ -103,13 +118,33 @@ export default function OrganizationDetailsPage() {
           </DialogHeader>
 
           <div className="space-y-3">
-            <Input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} />
-            <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
-            <Input type="password" name="password" placeholder="Temporary Password" value={form.password} onChange={handleChange} />
+            <Input
+              name="name"
+              placeholder="Full Name"
+              value={form.name}
+              onChange={handleChange}
+            />
+            <Input
+              name="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+            />
+            <Input
+              type="password"
+              name="password"
+              placeholder="Temporary Password"
+              value={form.password}
+              onChange={handleChange}
+            />
           </div>
 
           <DialogFooter>
-            <Button onClick={addMember} disabled={loading} className="bg-blue-600 text-white">
+            <Button
+              onClick={addMember}
+              disabled={loading}
+              className="bg-blue-600 text-white"
+            >
               {loading ? "Adding..." : "Add Member"}
             </Button>
           </DialogFooter>
@@ -118,17 +153,96 @@ export default function OrganizationDetailsPage() {
     );
   }
 
-
+  // Load org + members
   useEffect(() => {
     if (!id) return;
-    if (typeof window === "undefined") return; // <— FIX
+    if (typeof window === "undefined") return;
 
     fetchDetails();
   }, [id]);
 
+  // Initialize Telnyx WebRTC client whenever we have a fresh token
+useEffect(() => {
+  const token = localStorage.getItem("telnyx_webrtc_token");
+  if (!token) return;
+
+  // Prevent double initialization
+  if (clientRef.current) return;
+
+  const client = new TelnyxRTC({
+    login_token: token,
+  });
+
+  clientRef.current = client;
+
+  /** -------------------------
+   *  TELNYX READY
+   * ------------------------*/
+  client.on("telnyx.ready", () => {
+    console.log("WebRTC ready");
+  });
+
+  /** -------------------------
+   *  AUDIO STREAM HANDLING (THE CORRECT WAY)
+   * ------------------------*/
+  client.on("telnyx.notification", (notif: any) => {
+
+    if (notif.payload?.call?.remoteStream) {
+      const remote = document.getElementById("incoming") as HTMLAudioElement;
+      remote.srcObject = notif.payload.call.remoteStream;
+      remote.play();
+    }
+
+    if (notif.payload?.call?.localStream) {
+      const local = document.getElementById("outgoing") as HTMLAudioElement;
+      local.srcObject = notif.payload.call.localStream;
+    }
+  });
+
+  /** -------------------------
+   *  CONNECT TO TELNYX
+   * ------------------------*/
+  client.connect();
+
+  return () => {
+    client.disconnect();
+    clientRef.current = null;
+  };
+}, [webrtcToken]);
+
+
+const startWebRTCCall = async () => {
+  const client = clientRef.current;
+  if (!client) return;
+
+  const call = await client.newCall({
+    destinationNumber: dialNumber,
+    callerNumber: "+12129833272",
+  });
+
+  console.log("Call started:", call);
+  setCallStatus("ringing");
+};
+
+
+  const hangupWebRTCCall = () => {
+  const client = clientRef.current;
+  if (!client) return;
+
+  client.hangupCall();
+  setCallStatus("hangup");
+};
+
 
   return (
     <div className="p-8">
+      {/* Audio elements for Telnyx WebRTC */}
+    <audio id="incoming" autoPlay playsInline></audio>
+<audio id="outgoing" playsInline></audio>
+
+
+
+
       <Link href="/dashboard/organizations" className="text-blue-600">
         ← Back
       </Link>
@@ -149,9 +263,6 @@ export default function OrganizationDetailsPage() {
               <div className="font-bold flex justify-center items-center bg-blue-600 text-white p-4 rounded-lg shadow">
                 <h3>Balance ${org.balance}</h3>
               </div>
-
-
-
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-4">
@@ -189,10 +300,9 @@ export default function OrganizationDetailsPage() {
                   orgId={id as string}
                   onAdded={() => {
                     fetchDetails();
-                    setOpenAddMember(false);  // CLOSE DIALOG
+                    setOpenAddMember(false); // CLOSE DIALOG
                   }}
                 />
-
               </Dialog>
             </div>
 
@@ -200,13 +310,61 @@ export default function OrganizationDetailsPage() {
               <p className="text-gray-600">No members found.</p>
             ) : (
               <div className="space-y-3">
-                 {/* 📞 Call Button */}
-                  <Button
-                    className="bg-green-600 text-white px-3 py-1 text-sm"
-                    onClick={() => handleCall()}
-                  >
-                    Call
-                  </Button>
+                {/* 📞 Call Button */}
+                <Button
+                  className="bg-green-600 text-white px-3 py-1 text-sm"
+                  onClick={handleCallButtonClick}
+                >
+                  Call
+                </Button>
+
+                <>
+                  <Dialog open={dialerOpen} onOpenChange={setDialerOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Dial a Number</DialogTitle>
+                      </DialogHeader>
+
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="Enter phone number"
+                          value={dialNumber}
+                          onChange={(e) => setDialNumber(e.target.value)}
+                        />
+                      </div>
+
+                      {/* CALL + HANGUP BUTTONS */}
+                      <DialogFooter className="flex justify-between mt-4">
+                        <Button
+                          className="bg-green-600 text-white"
+                          onClick={startWebRTCCall}
+                        >
+                          Call
+                        </Button>
+
+                        <Button
+                          className="bg-red-600 text-white"
+                          onClick={hangupWebRTCCall}
+                        >
+                          Hang Up
+                        </Button>
+                      </DialogFooter>
+
+                      {callStatus !== "idle" && (
+                        <p className="text-sm text-gray-700">
+                          Status: {callStatus}
+                        </p>
+                      )}
+
+                      {callResponse && callResponse.callId && (
+                        <p className="text-sm text-gray-700">
+                          Call ID: {callResponse.callId}
+                        </p>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </>
+
                 {members.map((m) => (
                   <div
                     key={m.id}
@@ -222,13 +380,12 @@ export default function OrganizationDetailsPage() {
                         Role: <span className="text-blue-600">{m.role}</span>
                       </p>
                       <p className="text-xs text-gray-600">Status: {m.status}</p>
-                    </div>  
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-
         </div>
       )}
     </div>
