@@ -38,7 +38,7 @@ export default function OrganizationDetailsPage() {
   const [openAddMember, setOpenAddMember] = useState(false);
 
   const [dialerOpen, setDialerOpen] = useState(false);
-  const [dialNumber, setDialNumber] = useState("");
+  const [dialNumber, setDialNumber] = useState("+918828587896");
   const [callResponse, setCallResponse] = useState<any>(null);
   const [webrtcToken, setWebrtcToken] = useState("");
   const [callStatus, setCallStatus] = useState<string>("idle");

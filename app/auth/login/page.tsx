@@ -8,8 +8,11 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // const [email, setEmail] = useState("");
+  // const [password, setPassword] = useState("");
+  
+  const [email, setEmail] = useState("ttt@gmail.com");
+  const [password, setPassword] = useState("ttt");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
