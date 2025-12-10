@@ -10,7 +10,7 @@ export default function LoginPage() {
 
   // const [email, setEmail] = useState("");
   // const [password, setPassword] = useState("");
-  
+
   const [email, setEmail] = useState("ttt@gmail.com");
   const [password, setPassword] = useState("ttt");
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      debugger;
+      // debugger;
       const res = await http.post("/auth/login", { email, password });
 
       localStorage.setItem("access_token", res.data.access_token);

@@ -71,6 +71,8 @@ const startBackendCall = async () => {
       return;
     }
 
+    // debugger;
+
     const res = await http.post("/calls/voice/call", {
       toNumber: dialNumber,
       fromNumber: "+12129833272",
